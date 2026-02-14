@@ -54,7 +54,45 @@ The system requires the following core tables:
 ### Portfolio Data
 - `positions` — Current open positions with entry date, cost basis, shares, current market value, **`strategy_id` FK**, and **`reconstruction_period`**
 - `closed_positions` — Historical closed trades with entry/exit dates, prices, P&L, hold duration, exit reason, **`strategy_id` FK**, and **`reconstruction_period`**
-- `transactions` — Full trade log (buys, sells, dividends, corporate actions), with **`strategy_id` FK**
+- `transactions` — Full trade log imported from broker exports. Every row carries a `ticker` (the broker-provided symbol, or `CASH` for cash-only movements), a raw `action` (the broker's original label), a normalized `category`, a `strategy_id` FK, and standard fields (date, quantity, price, amount, fees). See [Transaction Taxonomy](#transaction-taxonomy) for the full classification.
+
+### Transaction Taxonomy
+
+Broker-exported actions are mapped to five normalized categories. The `ticker` field preserves the broker-provided security symbol for all security-referenced actions; only pure cash movements use the synthetic symbol `CASH`.
+
+| Category | `ticker` | Broker Actions | Notes |
+|----------|----------|----------------|-------|
+| `trade` | Security ticker | Buy, Sell | Core trade activity. Drives position open/close logic. |
+| `corporate_action` | Security ticker | Stock Split, Return Of Capital, Return Of Cap Adj | Affects share count or cost basis on the referenced position. |
+| `income` | Security ticker | Cash Dividend, Qualified Dividend, Non-Qualified Div, Special Qual Div, Special Non Qual Div, Special Dividend, Pr Yr Non-Qual Div, Pr Yr Cash Div | Cash received but attributed to the source security. Needed for per-position income tracking, yield calculations, and tax reporting. |
+| `fee` | Security ticker | ADR Mgmt Fee, Foreign Tax Paid | Costs attributable to a specific holding. Relevant for total cost of ownership and tax credit calculations. |
+| `cash_movement` | `CASH` | Wire Received, Bank Interest, Funds Paid, Stop Check Payment | No security reference. Affects only the cash balance. |
+
+**`transactions` Table Schema**
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `transaction_id` | UUID, PK | Unique identifier |
+| `date` | DATE | Transaction date |
+| `ticker` | VARCHAR(10) | Broker-provided security symbol, or `CASH` for cash-only movements |
+| `action` | VARCHAR(50) | Raw broker action label (e.g., "Qualified Dividend", "Buy") |
+| `category` | ENUM('trade','corporate_action','income','fee','cash_movement') | Normalized category for querying and reporting |
+| `quantity` | DECIMAL(14,6), nullable | Share quantity (positive for buys/splits, negative for sells; null for cash-only) |
+| `price` | DECIMAL(12,4), nullable | Per-share price (null for dividends, fees, cash movements) |
+| `amount` | DECIMAL(14,2) | Net dollar amount (positive = cash inflow, negative = cash outflow) |
+| `fees` | DECIMAL(10,2), default 0 | Commission or other transaction fees |
+| `strategy_id` | UUID, FK → `strategies`, nullable | Strategy context. Null for cash movements and unassigned legacy transactions. |
+| `security_id` | UUID, FK → `securities`, nullable | Normalized security reference. Null when `ticker = 'CASH'`. |
+| `description` | TEXT, nullable | Broker-provided description or notes |
+| `created_at` | TIMESTAMP | Record import/creation time |
+
+**Indexes**: `(date, ticker)`, `(strategy_id)`, `(category)`, `(ticker, category)`.
+
+**Import rules**:
+1. Parse the broker's `Action` field and map to `category` using the table above.
+2. If `category = 'cash_movement'`, set `ticker = 'CASH'`, `quantity = NULL`, `price = NULL`.
+3. For all other categories, preserve the broker-provided ticker and attempt to match to `securities.ticker` for the `security_id` FK.
+4. `strategy_id` is assigned either during import (if the broker export includes account/strategy tags) or manually after import via a mapping UI.
 
 ### Time Series
 - `portfolio_snapshots` — Daily portfolio-level NAV, cash, position count, and return index value

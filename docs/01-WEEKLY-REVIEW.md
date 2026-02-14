@@ -28,6 +28,7 @@ The Weekly Review is the portfolio manager's operational heartbeat — the first
 
 **Cash**:
 - Source: Dedicated `cash_balance` field in `portfolio_snapshots`, or derived from `NAV - SUM(position_values)`.
+- Cash balance is the running sum of all `transactions.amount` values. Inflows come from `cash_movement` (wires, interest), `income` (dividends), and `trade` sells. Outflows come from `trade` buys, `fee` (ADR fees, foreign tax), and `cash_movement` (funds paid).
 - The sub-value is `cash / NAV * 100`.
 
 **Positions**:
