@@ -196,7 +196,7 @@ A table showing every position that has ever been part of this strategy, across 
 
 | Column | Description |
 |--------|-------------|
-| Ticker | Security symbol |
+| Symbol | Security symbol |
 | Period | Which reconstruction period (e.g., "P1: Sep–Dec 2025", "P2: Jan–Mar 2026") |
 | Entry Date | When the position was opened within this strategy |
 | Exit Date | When closed (blank if still open) |
@@ -216,8 +216,8 @@ A table showing every position that has ever been part of this strategy, across 
 |-------|-------------|
 | Date | Reconstruction date |
 | Period | "Period 1 → Period 2" |
-| Positions Out | Tickers removed |
-| Positions In | Tickers added |
+| Positions Out | Symbols removed |
+| Positions In | Symbols added |
 | Note | Optional manager commentary |
 | Period Return | Return of the prior period that just ended |
 
@@ -260,7 +260,7 @@ Response:
   ],
   positions: [
     {
-      ticker: string,
+      symbol: string,
       period_label: string,
       entry_date: string,
       exit_date: string | null,
@@ -435,7 +435,7 @@ A named investment initiative owned by a manager team. This is the core tracking
 | `inception_date` | DATE | When the strategy was first deployed |
 | `closed_date` | DATE, nullable | When all positions were closed and strategy marked inactive |
 | `rebalance_frequency` | ENUM('monthly','quarterly','semi_annual','annual','ad_hoc'), nullable | Expected reconstruction cadence (null for fundamental) |
-| `benchmark_ticker` | VARCHAR(10), nullable | Strategy-specific benchmark if different from portfolio default |
+| `benchmark_symbol` | VARCHAR(10), nullable | Strategy-specific benchmark if different from portfolio default |
 | `created_at` | TIMESTAMP | Record creation time |
 | `updated_at` | TIMESTAMP | Last modification time |
 
@@ -454,8 +454,8 @@ A log of every reconstruction event within a strategy. Fundamental strategies wi
 | `date` | DATE | Date of the reconstruction |
 | `period_number` | INT | Sequential period number (1, 2, 3...) |
 | `period_label` | VARCHAR(50) | Human-readable label (e.g., "P2: Jan–Mar 2026") |
-| `positions_added` | TEXT[] | Array of tickers added in this reconstruction |
-| `positions_removed` | TEXT[] | Array of tickers removed in this reconstruction |
+| `positions_added` | TEXT[] | Array of symbols added in this reconstruction |
+| `positions_removed` | TEXT[] | Array of symbols removed in this reconstruction |
 | `note` | TEXT, nullable | Manager commentary on the reconstruction rationale |
 | `prior_period_return_pct` | DECIMAL(8,4), nullable | Return of the period that just ended |
 | `created_at` | TIMESTAMP | Record creation time |

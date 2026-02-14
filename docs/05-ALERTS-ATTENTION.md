@@ -33,7 +33,7 @@ The count on each card = number of active alerts in that category.
 - **Severity badge**: `HIGH` / `MED` / `LOW` / `INFO` with color-coded background.
 - **Category label**: e.g., "Position Size".
 - **Message**: Full alert text.
-- **Ticker badge** (optional): If the alert references a specific position.
+- **Symbol badge** (optional): If the alert references a specific position.
 - **Timestamp**: When the alert was generated or is relevant.
 
 ### Severity Levels
@@ -57,9 +57,9 @@ Each alert type has a specific trigger condition, message template, and severity
 
 | Condition | Severity | Message Template |
 |-----------|----------|-----------------|
-| `weight >= max_position_weight` | `high` | `{TICKER} at {weight}% — exceeds {cap}% hard cap. Immediate trim required.` |
-| `weight >= max_position_weight * 0.80` | `high` | `{TICKER} at {weight}% — approaching {cap}% hard cap. Trim ${amount} to target {target}%.` |
-| `weight_drift >= 0.5%` from entry weight AND `pnl >= 30%` | `med` | `{TICKER} up {pnl}% — weight drifted from {entry_weight}% to {current_weight}%.` |
+| `weight >= max_position_weight` | `high` | `{SYMBOL} at {weight}% — exceeds {cap}% hard cap. Immediate trim required.` |
+| `weight >= max_position_weight * 0.80` | `high` | `{SYMBOL} at {weight}% — approaching {cap}% hard cap. Trim ${amount} to target {target}%.` |
+| `weight_drift >= 0.5%` from entry weight AND `pnl >= 30%` | `med` | `{SYMBOL} up {pnl}% — weight drifted from {entry_weight}% to {current_weight}%.` |
 
 **Data sources**:
 - `positions.weight` (current) vs `portfolio_settings.max_position_weight`
@@ -88,8 +88,8 @@ Each alert type has a specific trigger condition, message template, and severity
 | Condition | Severity | Message Template |
 |-----------|----------|-----------------|
 | Sector weekly return < `drawdown_trigger` | `high` | `{Sector} sector {return}% this week. Approaching {trigger}% review trigger.` |
-| Position P&L from cost < `stop_loss * 0.75` | `low` | `{TICKER} down {pnl}% from cost — not yet at {stop}% stop.` |
-| Position P&L from cost < `stop_loss` | `high` | `{TICKER} hit {stop}% stop loss at {pnl}%. Execute exit or override.` |
+| Position P&L from cost < `stop_loss * 0.75` | `low` | `{SYMBOL} down {pnl}% from cost — not yet at {stop}% stop.` |
+| Position P&L from cost < `stop_loss` | `high` | `{SYMBOL} hit {stop}% stop loss at {pnl}%. Execute exit or override.` |
 
 **Data sources**:
 - `positions.pnl_pct` (from cost basis)
@@ -102,7 +102,7 @@ Each alert type has a specific trigger condition, message template, and severity
 
 | Condition | Severity | Message Template |
 |-----------|----------|-----------------|
-| Pairwise corr > `correlation_flag` AND combined weight > 5% | `med` | `{TICKER1}–{TICKER2} 90d corr at {corr} — combined {weight}% weight.` |
+| Pairwise corr > `correlation_flag` AND combined weight > 5% | `med` | `{SYMBOL1}–{SYMBOL2} 90d corr at {corr} — combined {weight}% weight.` |
 | Average intra-sector correlation increased > 10% month-over-month | `low` | `{Sector} internal correlation rising: {current} avg (was {prior}).` |
 
 **Data sources**:
@@ -116,13 +116,13 @@ Each alert type has a specific trigger condition, message template, and severity
 
 | Condition | Severity | Message Template |
 |-----------|----------|-----------------|
-| Held position has earnings within 7 calendar days | `info` | `{count} positions reporting next week: {ticker_list}.` |
+| Held position has earnings within 7 calendar days | `info` | `{count} positions reporting next week: {symbol_list}.` |
 | Major macro event within 7 calendar days | `info` or `med` | `{Event} on {date}. Portfolio sensitivity: {impact_description}.` |
 
 **Macro events with `med` severity**: Events where the portfolio has outsized exposure (e.g., CPI print when energy weight is 2× benchmark, or Fed meeting when portfolio has high rate sensitivity).
 
 **Data sources**:
-- `earnings_calendar` (ticker, report_date) joined with `positions`
+- `earnings_calendar` (symbol, report_date) joined with `positions`
 - `macro_events` (event_name, event_date, impact_type)
 - Sector weights for contextual sensitivity assessment
 
@@ -206,7 +206,7 @@ Response:
       category: "Position Size" | "Factor Breach" | "Drawdown" | "Correlation" | "Earnings" | "Macro",
       severity: "high" | "med" | "low" | "info",
       message: string,
-      ticker: string | null,
+      symbol: string | null,
       timestamp: string,
       icon: string
     }
@@ -244,7 +244,7 @@ Response:
 ## Database Tables Involved
 
 - `alert_rules` — Rule definitions with condition type, thresholds, severity, and message templates
-- `alert_instances` — Generated alert records (id, rule_id, category, severity, message, ticker, timestamp, status)
+- `alert_instances` — Generated alert records (id, rule_id, category, severity, message, symbol, timestamp, status)
 - `portfolio_settings` — All threshold values
 - `positions` — For position size and drawdown checks
 - `factor_exposures` — For factor breach checks

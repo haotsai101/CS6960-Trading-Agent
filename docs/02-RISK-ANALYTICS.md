@@ -193,8 +193,8 @@ Response:
 
 ### Database Tables Involved
 
-- `position_snapshots` (date, ticker, market_value) — for daily position returns
-- Market data — for daily prices per ticker
+- `position_snapshots` (date, symbol, market_value) — for daily position returns
+- Market data — for daily prices per symbol
 - `securities` (sector) — for sector grouping
 - `portfolio_settings` (correlation_flag) — threshold for flagging
 
