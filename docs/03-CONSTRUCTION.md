@@ -90,10 +90,10 @@ Response:
 
 ### Database Tables Involved
 
-- `positions` (ticker, shares, current_price, sector) — for sector weights
+- `positions` (symbol, shares, current_price, sector) — for sector weights
 - `securities` (sector) — for GICS classification
 - `benchmark_weights` (sector, weight) — for target allocation
-- `factor_exposures` (ticker, momentum, quality, value, size, volatility) — per-security factor loadings
+- `factor_exposures` (symbol, momentum, quality, value, size, volatility) — per-security factor loadings
 - `portfolio_settings` (cash_target_pct, factor targets)
 
 ---
@@ -106,7 +106,7 @@ Response:
 
 Each trade row has three fields:
 - **Action**: `Buy` or `Sell` dropdown.
-- **Ticker**: Text input (uppercase).
+- **Symbol**: Text input (uppercase).
 - **Amount**: Dollar amount.
 
 The user can add multiple rows by clicking "+ Add trade". Each row can be removed individually.
@@ -118,7 +118,7 @@ The user can add multiple rows by clicking "+ Add trade". Each row can be remove
 For each staged trade, the system recalculates:
 
 **Portfolio Beta Change**:
-- Look up the ticker's sector.
+- Look up the symbol's sector.
 - Apply a sector-level beta assumption (or the security's individual beta if available).
 - `delta_beta = sign * (amount / NAV) * security_beta`
 - `new_portfolio_beta = current_beta + SUM(delta_beta for all staged trades)`
@@ -150,7 +150,7 @@ A 5-axis spider/radar chart comparing the portfolio's current factor profile wit
 **Axes**: Momentum, Quality, Value, Size, Volatility (each in σ units, range −1 to +1).
 
 - **Portfolio line** (solid blue): Current portfolio-level factor exposures from `factor_exposures` table.
-- **Position line** (dashed purple): The first staged ticker's per-security factor loadings.
+- **Position line** (dashed purple): The first staged symbol's per-security factor loadings.
 
 This allows the PM to visually assess whether the new trade diversifies or concentrates factor exposure.
 
@@ -162,7 +162,7 @@ POST /api/construction/what-if
 Request Body:
 {
   trades: [
-    { action: "Buy" | "Sell", ticker: string, amount: number }
+    { action: "Buy" | "Sell", symbol: string, amount: number }
   ]
 }
 
@@ -184,7 +184,7 @@ Response:
 ### Database Tables Involved
 
 - `positions` — for current weights (to compute beta contribution)
-- `securities` (sector, beta, factor_loadings) — for lookup of staged tickers
+- `securities` (sector, beta, factor_loadings) — for lookup of staged symbols
 - `portfolio_settings` — for current portfolio beta
 - `factor_exposures` — for portfolio-level factor profile and per-security loadings
 
@@ -241,7 +241,7 @@ A position appears in the Trim list if any of the following conditions are met:
 2. **Large unrealized gain**: `pnl_pct >= 30%` — consider locking in profits.
 3. **Sector overweight**: The position's sector is overweight vs benchmark by more than `max_sector_overweight`.
 
-Display: Ticker, reason, suggested trim amount (enough to bring back to a target weight).
+Display: Symbol, reason, suggested trim amount (enough to bring back to a target weight).
 
 ### Add Logic (Rule-Based)
 
@@ -258,7 +258,7 @@ GET /api/construction/candidates
 Response:
 {
   trim: [
-    { ticker: string, reason: string, suggested_action: string }
+    { symbol: string, reason: string, suggested_action: string }
   ],
   add: [
     { label: string, reason: string, suggested_action: string }
@@ -276,7 +276,7 @@ Response:
 
 | Column | Key | Sortable | Description |
 |--------|-----|----------|-------------|
-| Ticker | `ticker` | Yes | Symbol with monospace font |
+| Symbol | `symbol` | Yes | Symbol with monospace font |
 | Name | — | No | Company name |
 | Sector | `sector` | Yes | GICS sector |
 | Industry | `industry` | Yes | GICS sub-industry |
@@ -295,7 +295,7 @@ Response:
 
 | Filter | Type | Options | Behavior |
 |--------|------|---------|----------|
-| Search | Text input | — | Filters by ticker or name (case-insensitive substring match) |
+| Search | Text input | — | Filters by symbol or name (case-insensitive substring match) |
 | Sector | Dropdown | All 11 GICS sectors | Exact match on sector |
 | Cap | Dropdown | Large, Mid, Small | Exact match on market cap category |
 | P&L | Dropdown | Winners, Losers | Filters to `pnl > 0` or `pnl < 0` |
@@ -313,7 +313,7 @@ Response:
 {
   positions: [
     {
-      ticker: string,
+      symbol: string,
       name: string,
       sector: string,
       industry: string,
@@ -334,7 +334,7 @@ Response:
 
 ### Database Tables Involved
 
-- `positions` (ticker, shares, entry_date, cost_basis, status, strategy_id)
+- `positions` (symbol, shares, entry_date, cost_basis, status, strategy_id)
 - `securities` (name, sector, industry, market_cap_category)
 - `strategies` (strategy_id, name) — for strategy name display
 - Market data — for current price and day change
@@ -352,4 +352,4 @@ Response:
 | `pnlFilter` | `string` | `""` | Winners/losers dropdown |
 | `sortKey` | `string` | `"weight"` | Active sort column |
 | `sortDir` | `"asc" \| "desc"` | `"desc"` | Sort direction |
-| `whatIf` | `Array<{ticker, action, amount}>` | `[{ticker:"", action:"Buy", amount:"5000"}]` | Staged trades |
+| `whatIf` | `Array<{symbol, action, amount}>` | `[{symbol:"", action:"Buy", amount:"5000"}]` | Staged trades |

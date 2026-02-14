@@ -31,7 +31,7 @@ The Weekly Review is the portfolio manager's operational heartbeat — the first
 - The sub-value is `cash / NAV * 100`.
 
 **Positions**:
-- Formula: `COUNT(DISTINCT ticker) WHERE status = 'open'` from the `positions` table.
+- Formula: `COUNT(DISTINCT symbol) WHERE status = 'open'` from the `positions` table.
 - The "of 300" limit comes from `portfolio_settings.max_positions`.
 
 **Week P&L**:
@@ -136,8 +136,8 @@ Response:
 ### Database Tables Involved
 
 - `portfolio_snapshots` (date, nav) — for portfolio index
-- `benchmark_snapshots` (date, close_price, ticker) — for SPY index
-- `portfolio_settings` (aytd_start_date, inception_date, benchmark_ticker)
+- `benchmark_snapshots` (date, close_price, symbol) — for SPY index
+- `portfolio_settings` (aytd_start_date, inception_date, benchmark_symbol)
 
 ---
 
@@ -162,7 +162,7 @@ Response:
       category: "Position Size" | "Factor Breach" | "Drawdown" | "Correlation" | "Earnings" | "Macro",
       severity: "high" | "med" | "low" | "info",
       message: string,
-      ticker: string | null,
+      symbol: string | null,
       timestamp: string,
       icon: string
     }
@@ -188,7 +188,7 @@ The treemap uses a nested proportional-area layout:
 
 1. **Level 1 — Sector**: Each GICS sector gets a horizontal slice proportional to its total weight in the portfolio. Sectors are sorted by weight descending (largest sector on the left).
 2. **Level 2 — Industry**: Within each sector slice, positions are grouped by GICS sub-industry.
-3. **Level 3 — Ticker**: Each individual position is a colored rectangle. Size is proportional to its weight within the sector.
+3. **Level 3 — Symbol**: Each individual position is a colored rectangle. Size is proportional to its weight within the sector.
 
 **Color Scale** (performance-based):
 
@@ -202,12 +202,12 @@ The treemap uses a nested proportional-area layout:
 | −3% to −1.5% | Red | `#C8220D` |
 | ≤ −3% | Dark red | `#7F1D1D` |
 
-**Tooltip** (on hover): `{Ticker} | {Industry} | Weight: {X}% | {Day/Week}: {±Y}%`
+**Tooltip** (on hover): `{Symbol} | {Industry} | Weight: {X}% | {Day/Week}: {±Y}%`
 
 ### Data Requirements
 
 For every open position, the treemap needs:
-- `ticker` — Display label
+- `symbol` — Display label
 - `sector` — GICS sector for Level 1 grouping
 - `industry` — GICS sub-industry for Level 2 grouping
 - `weight` — Current portfolio weight (position market value / NAV * 100)
@@ -227,7 +227,7 @@ Response:
 {
   positions: [
     {
-      ticker: string,
+      symbol: string,
       sector: string,           // GICS sector
       industry: string,         // GICS sub-industry
       weight: number,           // Portfolio weight %
@@ -240,7 +240,7 @@ Response:
 
 ### Database Tables Involved
 
-- `positions` (ticker, shares, current_price, sector, industry) — for live weights
+- `positions` (symbol, shares, current_price, sector, industry) — for live weights
 - `securities` (sector, industry) — GICS classification reference
 - Market data provider — for daily/weekly price changes
 - `portfolio_snapshots` (nav) — for weight denominator
@@ -249,7 +249,7 @@ Response:
 
 ## 1.5 Top 10 / Bottom 10 Movers
 
-**Visual**: Two side-by-side panels. The left shows the 10 positions with the largest positive weekly percentage change. The right shows the 10 with the largest negative weekly change. Each row displays: rank number, ticker, industry, portfolio weight, and weekly % change.
+**Visual**: Two side-by-side panels. The left shows the 10 positions with the largest positive weekly percentage change. The right shows the 10 with the largest negative weekly change. Each row displays: rank number, symbol, industry, portfolio weight, and weekly % change.
 
 ### Purpose
 
@@ -262,7 +262,7 @@ This uses the same dataset as the treemap (`week_change_pct` per position), simp
 - **Top 10**: `ORDER BY week_change_pct DESC LIMIT 10`
 - **Bottom 10**: `ORDER BY week_change_pct ASC LIMIT 10`
 
-Each row needs: `ticker`, `industry`, `weight`, `week_change_pct`.
+Each row needs: `symbol`, `industry`, `weight`, `week_change_pct`.
 
 ### Backend Computation
 
@@ -272,10 +272,10 @@ GET /api/weekly/movers
 Response:
 {
   top: [
-    { ticker: string, industry: string, weight: number, week_change_pct: number }
+    { symbol: string, industry: string, weight: number, week_change_pct: number }
   ],  // 10 items, sorted by week_change_pct descending
   bottom: [
-    { ticker: string, industry: string, weight: number, week_change_pct: number }
+    { symbol: string, industry: string, weight: number, week_change_pct: number }
   ]   // 10 items, sorted by week_change_pct ascending
 }
 ```

@@ -25,7 +25,7 @@ The system uses several user-configurable parameters stored in a `portfolio_sett
 |---------|---------|-------------|
 | `aytd_start_date` | `2025-09-01` | Reset date for AYTD (Annualized Year-to-Date) calculations |
 | `inception_date` | `2024-09-01` | Fund inception date for max-horizon return calculations |
-| `benchmark_ticker` | `SPY` | Benchmark ETF for comparative analytics |
+| `benchmark_symbol` | `SPY` | Benchmark ETF for comparative analytics |
 | `max_position_weight` | `5.0%` | Hard cap on any single position |
 | `max_sector_overweight` | `5.0%` | Max deviation from benchmark sector weight |
 | `factor_ceiling` | `1.0σ` | Max factor exposure deviation |
@@ -40,14 +40,14 @@ The system uses several user-configurable parameters stored in a `portfolio_sett
 The system requires the following core tables:
 
 ### Reference Data
-- `securities` — Ticker, name, sector (GICS), industry (GICS sub-industry), market cap category, and factor loadings
+- `securities` — Symbol, name, sector (GICS), industry (GICS sub-industry), market cap category, and factor loadings
 - `benchmark_weights` — Current benchmark (SPY) sector and position weights, updated monthly
 - `earnings_calendar` — Upcoming earnings dates for held securities
 - `macro_events` — Fed meetings, CPI releases, and other macro catalysts
 
 ### Manager & Strategy Data
 - `manager_teams` — Organizational units responsible for groups of strategies (team_id, name, description, lead_manager, inception_date, is_active)
-- `strategies` — Named investment initiatives owned by a manager team (strategy_id, team_id FK, name, type [fundamental/systematic/macroeconomic], status [active/inactive], thesis, inception_date, closed_date, rebalance_frequency, benchmark_ticker)
+- `strategies` — Named investment initiatives owned by a manager team (strategy_id, team_id FK, name, type [fundamental/systematic/macroeconomic], status [active/inactive], thesis, inception_date, closed_date, rebalance_frequency, benchmark_symbol)
 - `strategy_reconstructions` — Log of reconstruction events within multi-position strategies (reconstruction_id, strategy_id FK, date, period_number, positions_added[], positions_removed[], note, prior_period_return_pct)
 - `strategy_snapshots` — Daily time series of strategy-level market value, daily return, cumulative index, and realized P&L
 
@@ -70,7 +70,7 @@ The system requires the following core tables:
 
 ### Alerts
 - `alert_rules` — Configurable alert rule definitions with thresholds
-- `alert_instances` — Generated alert records with category, severity, message, ticker reference, and timestamp
+- `alert_instances` — Generated alert records with category, severity, message, symbol reference, and timestamp
 
 ## API Endpoint Summary
 
