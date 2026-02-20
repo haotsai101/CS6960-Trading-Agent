@@ -1,17 +1,28 @@
-from flask import Flask
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-app = Flask(__name__)
+app = FastAPI()
+
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
-@app.route('/')
+@app.get('/')
 def hello():
     return {'message': 'Hello, World!'}
 
 
-@app.route('/api/health')
+@app.get('/api/health')
 def health():
     return {'status': 'ok'}
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    import uvicorn
+    uvicorn.run(app, host='0.0.0.0', port=5000, reload=True)
